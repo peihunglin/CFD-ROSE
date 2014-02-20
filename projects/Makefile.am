@@ -48,6 +48,7 @@ SUBDIRS = \
 	ManyCoreRuntime \
 	StencilManyCore \
 	Fortran_to_C \
+	FortranInliner \
 	mint \
 	vectorization \
 	extractMPISkeleton \

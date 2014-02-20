@@ -1978,6 +1978,9 @@ projects/mint/tests/Makefile
 projects/Fortran_to_C/Makefile
 projects/Fortran_to_C/src/Makefile
 projects/Fortran_to_C/tests/Makefile
+projects/FortranInliner/Makefile
+projects/FortranInliner/src/Makefile
+projects/FortranInliner/tests/Makefile
 projects/vectorization/Makefile
 projects/vectorization/src/Makefile
 projects/vectorization/tests/Makefile

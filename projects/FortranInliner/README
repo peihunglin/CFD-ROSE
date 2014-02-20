@@ -1,0 +1,19 @@
+Project: Fortran Inliner
+------------------------------------------------------------------------------------------
+Part of ROSE project at Lawrence Livermore National Laboratory.
+
+Author: Pei-Hung Lin
+Contact: lin32@llnl.gov
+
+Date Created       : Feb. 2014
+
+------------------------------------------------------------------------------------------
+Project Goal: 
+Generate a Fortran inliner to support CFDBuilder and Fortran transformation
+
+------------------------------------------------------------------------------------------
+Design/Implementation:
+
+
+------------------------------------------------------------------------------------------
+Instruction:
