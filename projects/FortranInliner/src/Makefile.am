@@ -12,8 +12,9 @@ bin_PROGRAMS = FortranInliner
 
 
 FortranInliner_SOURCES=\
-	main.C 
+	main.C \
+	fortranInliner.C 
 
-#include_HEADERS = fortranInliner.h
+include_HEADERS = fortranInliner.h
 
-#EXTRA_DIST = fortranInliner.h
+EXTRA_DIST = fortranInliner.h

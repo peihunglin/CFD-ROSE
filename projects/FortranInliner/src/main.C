@@ -6,16 +6,16 @@
 */  
 
 #include "rose.h"
+#include "fortranInliner.h"
 
 using namespace std;
-using namespace SageInterface;
-using namespace SageBuilder;
 
 int main( int argc, char * argv[] )
 {
 // Build the AST used by ROSE
   SgProject* project = frontend(argc,argv);
-  AstTests::runAllTests(project);   
+  AstTests::runAllTests(project);
+  fortranInliner::fInliner(project); 
+  generateDOT(*project);
   return backend(project);
 }
-

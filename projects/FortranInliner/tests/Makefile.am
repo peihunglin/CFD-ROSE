@@ -3,7 +3,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 TESTCODE_INCLUDES = 
 
 TESTCODES_REQUIRED_TO_PASS = \
-				   simpleExample1.F
+				   simpleExample1.F \
+				   simpleExample2.F
 
 
 ALL_TESTCODES = \
