@@ -3,5 +3,7 @@
       call test()
       end program
       subroutine test()
-        f = f + 1.0
+       dimension d(10)
+       dimension e(10,10)
+       dimension f(10,10,10)
       end subroutine

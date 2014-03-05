@@ -4,5 +4,5 @@
       call test()
       end program
       subroutine test()
-        f = 1.0
+        f = f + 1.0
       end subroutine

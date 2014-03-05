@@ -1,0 +1,12 @@
+      program testcode
+      dimension d(10)
+      dimension e(10,10)
+      dimension f(10,10,10)
+!$pragma inline
+      call test()
+      end program
+      subroutine test()
+      dimension d(10)
+      dimension e(10,10)
+      dimension f(10,10,10)
+      end subroutine

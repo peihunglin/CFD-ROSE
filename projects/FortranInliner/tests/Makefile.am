@@ -4,7 +4,9 @@ TESTCODE_INCLUDES =
 
 TESTCODES_REQUIRED_TO_PASS = \
 				   simpleExample1.F \
-				   simpleExample2.F
+				   simpleExample2.F \
+				   simpleExample3.F \
+				   simpleExample4.F
 
 
 ALL_TESTCODES = \

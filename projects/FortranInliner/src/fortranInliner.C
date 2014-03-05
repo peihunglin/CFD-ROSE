@@ -67,22 +67,65 @@ namespace fortranInliner
       SgStatement* stmt = isSgStatement(*i);
       ROSE_ASSERT(stmt);
       SgStatement* newStmt = deepCopy(stmt);
+      // using map to store all variable names to avoid duplication
+      std::map<SgName,SgVarRefExp*> varRefList;
+
+      // serach for all VarRefExp in SgStatement 
       Rose_STL_Container<SgNode*> varList = NodeQuery::querySubTree(newStmt,V_SgVarRefExp);
       for(Rose_STL_Container<SgNode*>::iterator j = varList.begin(); j != varList.end(); ++j)
       {
         SgVarRefExp* varRef = isSgVarRefExp(*j);
         ROSE_ASSERT(varRef);
-        SgVariableSymbol* varSymbol = varRef->get_symbol();
-        SgName varName = varSymbol->get_name();
-        SgSymbol* tmp = lookupSymbolInParentScopes(varName, scope);
-        if(tmp != NULL)
-        {
-          cout << "var name found in both caller and callee: " << varName.getString() << endl;
-          SgName newName = SgName(varName.getString()+"_new");
-          varSymbol->get_declaration()->set_name(newName);
+        varRefList.insert(std::pair<SgName,SgVarRefExp*>(varRef->get_symbol()->get_name(),varRef));
+       }
+
+      // serach for all VarRefExp in SgAttributeSpecificationStatement 
+       SgAttributeSpecificationStatement* attributeStmt = isSgAttributeSpecificationStatement(newStmt);
+       if((attributeStmt !=NULL) && (attributeStmt->get_attribute_kind() == SgAttributeSpecificationStatement::e_dimensionStatement))
+       {
+         cout << "found implicit array" << endl;
+        SgExpressionPtrList parameterList =  attributeStmt->get_parameter_list()->get_expressions();
+        for(SgExpressionPtrList::iterator k=parameterList.begin(); k != parameterList.end(); ++k)
+         {
+           SgPntrArrRefExp* pntrArrRefExp = isSgPntrArrRefExp(*k);
+           if(pntrArrRefExp != NULL)
+           {
+             SgVarRefExp* varRef = isSgVarRefExp(pntrArrRefExp->get_lhs_operand());
+             ROSE_ASSERT(varRef);
+             varRefList.insert(std::pair<SgName,SgVarRefExp*>(varRef->get_symbol()->get_name(),varRef));
+          }
         }
-      }
-      insertStatement(funcCallStmt, newStmt, true, false);
+       }
+
+      SgSymbolTable* symTable = scope->get_symbol_table();
+      for(std::map<SgName, SgVarRefExp*>::iterator k=varRefList.begin(); k != varRefList.end(); ++k)
+       {
+         SgName varName = k->first;
+         SgVarRefExp* varRef = isSgVarRefExp(k->second);
+         ROSE_ASSERT(varRef);
+         SgVariableSymbol* varSymbol = deepCopy(varRef->get_symbol());
+         cout << "new:" << varSymbol << ":: old: " << varRef->get_symbol() << endl;
+         SgSymbol* tmp = lookupSymbolInParentScopes(varName, scope);
+         if(tmp != NULL)
+         {
+           cout << "var name found in both caller and callee: " << varName.getString() << endl;
+           string uniqName = generateUniqueVariableName(scope,varName.getString());
+           SgName newName = SgName(uniqName);
+           SgInitializedName* initName = varSymbol->get_declaration();
+           initName->set_name(newName);
+           initName->set_scope(scope);
+         }
+//         Add the new symbol into caller's symbol table
+         {
+           if(!symTable->exists(varSymbol->get_name(),varSymbol))
+           {
+             cout << "adding new symbol " << varSymbol << ":" << varSymbol->get_name()  << " into symtable " << symTable  << endl;
+             symTable->insert(varSymbol->get_name(),varSymbol);
+           }
+         }
+       }
+       // Inline the stmt from callee into caller
+       insertStatement(funcCallStmt, newStmt, true, false);
     } 
   }
 

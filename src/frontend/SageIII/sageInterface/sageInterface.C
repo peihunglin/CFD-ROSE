@@ -7081,7 +7081,8 @@ string SageInterface::generateUniqueVariableName(SgScopeStatement* scope, std::s
     bool collision = false;
     do
     {
-        name = "__" + baseName + boost::lexical_cast<string > (counter++) + "__";
+// PHL (3/5/2014): remove prefix "__" to support Fortran
+        name = baseName + boost::lexical_cast<string > (counter++) + "__";
 
      // DQ (8/16/2013): Modified to reflect new API.
      // Look up the name in the parent scopes
