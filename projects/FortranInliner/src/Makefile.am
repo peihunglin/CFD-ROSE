@@ -8,12 +8,11 @@ AUTOMAKE_OPTIONS = subdir-objects
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(ROSE_LIBS)
 
-bin_PROGRAMS = FortranInliner
+bin_PROGRAMS = fortranInliner
 
 
-FortranInliner_SOURCES=\
-	main.C \
-	fortranInliner.C 
+fortranInliner_SOURCES= main.C \
+	fortranInliner.C
 
 include_HEADERS = fortranInliner.h
 
