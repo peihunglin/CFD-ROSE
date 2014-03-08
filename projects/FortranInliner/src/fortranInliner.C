@@ -106,10 +106,11 @@ namespace fortranInliner
           varName = SgName(uniqName);
         }
         SgVariableDeclaration* varDecl = buildVariableDeclaration(varName,varType,NULL,scope);
+        varDecl->set_parent(scope);
         symbolMap.insert(std::make_pair(sym->get_name(), varDecl));
         // A equivalence stmt has to be inserted
-        SgEquivalenceStatement* equivStmt = buildEquivalenceStatement(buildVarRefExp(callerVarInitName),buildVarRefExp(varDecl));
-        equivStmt->set_parent(scope);
+//        SgEquivalenceStatement* equivStmt = buildEquivalenceStatement(buildVarRefExp(callerVarInitName),buildVarRefExp(varDecl));
+//        equivStmt->set_parent(scope);
 //        setSourcePositionForTransformation(equivStmt);
 //        insertStatementAfterLastDeclaration(equivStmt,scope);
       } 
@@ -134,7 +135,7 @@ namespace fortranInliner
       }
 
       SgVariableDeclaration* varDecl = buildVariableDeclaration(varName,varType,NULL,scope);
-      //varDecl->set_parent(scope);
+      varDecl->set_parent(scope);
       symbolMap.insert(std::make_pair(sym->get_name(), varDecl));
     }
 
@@ -161,7 +162,7 @@ namespace fortranInliner
           ROSE_ASSERT(varRef);
           SgName tmpName = varRef->get_symbol()->get_name();
           SgVariableDeclaration* newDecl = symbolMap.find(tmpName)->second;
-          newDecl->set_parent(scope);
+//          newDecl->set_parent(scope);
           SgInitializedNamePtrList varList = newDecl->get_variables();
           ROSE_ASSERT(varList.size() == 1);
           SgInitializedName* initname = varList.at(0);

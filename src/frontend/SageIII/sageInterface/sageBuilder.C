@@ -12538,7 +12538,7 @@ SageBuilder::buildEquivalenceStatement(SgExpression* elt1,SgExpression* elt2)
   setList->set_parent(equivalenceStatement);
   setOneSourcePositionForTransformation(setList); 
 
-  SgExprListExp* tuple;
+  SgExprListExp* tuple = new SgExprListExp();
   tuple->append_expression(elt1);
   elt1->set_parent(tuple);
   tuple->append_expression(elt2);

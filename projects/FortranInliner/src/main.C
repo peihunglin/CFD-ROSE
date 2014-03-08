@@ -16,8 +16,8 @@ int main( int argc, char * argv[] )
   SgProject* project = frontend(argc,argv);
   AstTests::runAllTests(project);
   fortranInliner::fInliner(project); 
-//  AstTests::runAllTests(project);
-//  string filename = SageInterface::generateProjectName(project);
-//  generateWholeGraphOfAST(filename+"wholeAST");
+  AstTests::runAllTests(project);
+  string filename = SageInterface::generateProjectName(project);
+  generateWholeGraphOfAST(filename+"wholeAST");
   return backend(project);
 }
