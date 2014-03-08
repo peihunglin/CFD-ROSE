@@ -1274,6 +1274,11 @@ ROSE_DLL_API AbstractHandle::abstract_handle * buildAbstractHandle(SgNode* n);
 
 //@}
 
+// 03/17/2014 PHL
+//! Build an equivalence statement from two expression operands
+ROSE_DLL_API SgEquivalenceStatement* 
+buildEquivalenceStatement(SgExpression* lhs,SgExpression* rhs);
+
 } // end of namespace
 
 #endif //ROSE_SAGE_BUILDER_INTERFACE

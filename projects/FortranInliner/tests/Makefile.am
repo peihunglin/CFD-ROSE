@@ -8,7 +8,8 @@ TESTCODES_REQUIRED_TO_PASS = \
 				   simpleExample3.F \
 				   simpleExample4.F \
 				   simpleExample5.F \
-				   passArg1.F
+				   passArg1.F \
+				   passArg2.F
 
 
 ALL_TESTCODES = \

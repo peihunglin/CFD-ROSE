@@ -71,7 +71,7 @@ namespace fortranInliner
     }
 
 //  The symbol table at callee's funcDef
-//    SgSymbolTable* funcDefSymTable = funcDef->get_symbol_table();
+    SgSymbolTable* funcDefSymTable = funcDef->get_symbol_table();
     SgBasicBlock* bblock = funcDef->get_body();
     ROSE_ASSERT(bblock);
 //  The symbol table at callee's basic block 
@@ -82,6 +82,29 @@ namespace fortranInliner
     // using map to store all variable names to avoid duplication
     std::map<SgName,SgVariableDeclaration*> symbolMap;
 
+    // Handling symbolTable in funcDefinition
+    std::set<SgNode*> funArgSymbolList = funcDefSymTable->get_symbols();
+    for(std::set<SgNode*>::iterator it = funArgSymbolList.begin(); it !=funArgSymbolList.end(); ++it)
+    {
+      SgVariableSymbol* sym = isSgVariableSymbol(*it);
+      ROSE_ASSERT(sym);
+      SgType* varType = sym->get_type();
+      SgName varName = sym->get_name();
+      SgInitializedName* argInitName = sym->get_declaration();
+      SgExpression* callerExp = argsMap.find(argInitName)->second; 
+//      ROSE_ASSERT(callerExp->get_type() == varType);
+
+      string uniqName = generateUniqueVariableName(scope,varName.getString());
+      varName = SgName(uniqName);
+      SgVariableDeclaration* varDecl = buildVariableDeclaration(varName,varType,NULL,scope);
+      symbolMap.insert(std::make_pair(sym->get_name(), varDecl));
+      // A equivalence stmt has to be inserted
+      SgEquivalenceStatement* equivStmt = buildEquivalenceStatement(buildVarRefExp(convertRefToInitializedName(callerExp)),buildVarRefExp(varDecl));
+      equivStmt->set_parent(scope);
+//      insertStatementAfterLastDeclaration(equivStmt,scope);
+    }
+
+    // Handling symbolTable in basicblock
     std::set<SgNode*> calleeSymbolList = calleeSymTable->get_symbols();
     for(std::set<SgNode*>::iterator it = calleeSymbolList.begin(); it !=calleeSymbolList.end(); ++it)
     {
@@ -99,7 +122,6 @@ namespace fortranInliner
       }
 
       SgVariableDeclaration* varDecl = buildVariableDeclaration(varName,varType,NULL,scope);
-      
       symbolMap.insert(std::make_pair(sym->get_name(), varDecl));
     }
 
@@ -118,12 +140,14 @@ namespace fortranInliner
         
         // replacing all varRef for arguments
         SgInitializedName* varInitializedName = varRef->get_symbol()->get_declaration();
+        SgType* varType = varInitializedName->get_type();
         Rose_STL_Container<SgInitializedName*>::iterator it = find(calleeArgList.begin(),calleeArgList.end(),varInitializedName);        
         if(it != calleeArgList.end())
         {
-//          cout << tmpName << " used Arg" << endl;
+          cout << tmpName << " used Arg" << endl;
           // Simply replacing the varRef with the SgExpression at caller's argument list
-          replaceExpression(varRef, argsMap.find(varInitializedName)->second);
+          if(isSgArrayType(varType) == NULL)
+            replaceExpression(varRef, argsMap.find(varInitializedName)->second);
           continue;
         }
 

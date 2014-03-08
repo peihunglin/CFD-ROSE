@@ -12521,3 +12521,24 @@ AbstractHandle::abstract_handle * SageBuilder::buildAbstractHandle(SgNode* n)
 }
 #endif
 
+SgEquivalenceStatement*
+SageBuilder::buildEquivalenceStatement(SgExpression* elt1,SgExpression* elt2)
+{
+  ROSE_ASSERT(elt1 != NULL); 
+  ROSE_ASSERT(elt2 != NULL); 
+  
+  //SgAssignOp* assignOp = new SgAssignOp(lhs,rhs,lhs->get_type());
+// SgBinaryOp::get_type() assume p_expression_type is not set
+  SgListExp* tuple = new SgListExp();
+  ROSE_ASSERT(tuple);
+  if (elt1) appendExpression(tuple, elt1);
+  if (elt2) appendExpression(tuple, elt2);
+
+  SgListExp* equivList = new SgListExp();
+  ROSE_ASSERT(equivList);
+  if(tuple) appendExpression(equivList,tuple);
+  SgEquivalenceStatement* stmt = new SgEquivalenceStatement();
+  stmt->set_equivalence_set_list(equivList); 
+  setOneSourcePositionForTransformation(stmt); 
+  return stmt;
+}
