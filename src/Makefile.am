@@ -224,8 +224,7 @@ REQUIRED_LIBS = librose.la
 
 # DQ (3/14/2009): In this file we have to overwrite existing values in LDFLAGS (to build librose.so).
 # DQ (3/14/2009): We have to clear the LDFLAGS variable...  This is not so great.
-LDFLAGS += /Users/lin32/development/opt/macports/lib/gcc44/gcc/x86_64-apple-darwin12/4.4.7/libgcc_eh.a
-LDFLAGS += -L/Users/lin32/development/opt/macports/lib -lgcrypt
+LDFLAGS += 
 
 testSharedRoseLib_SOURCES = testRoseLib.C
 testSharedRoseLib_DEPENDENCIES = $(REQUIRED_LIBS)
