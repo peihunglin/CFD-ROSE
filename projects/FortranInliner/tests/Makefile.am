@@ -20,22 +20,22 @@ PASSING_FORTRAN_TEST_OBJECTS = $(TESTCODES_REQUIRED_TO_PASS:.F=.o)
 # if ROSE_USE_OPEN_FORTRAN_PARSER
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 
-FortranInliner:
-	$(MAKE) -C ../src FortranInliner
+fortranInliner:
+	$(MAKE) -C ../src fortranInliner
 	
 
-$(PASSING_FORTRAN_TEST_OBJECTS): %.o: $(srcdir)/%.F FortranInliner 
-	../src/FortranInliner -c $<
+$(PASSING_FORTRAN_TEST_OBJECTS): %.o: $(srcdir)/%.F fortranInliner 
+	../src/fortranInliner -c $<
 
 
 check-local:
-	@echo "Test for FortranInliner"
+	@echo "Test for fortranInliner"
 	@$(MAKE) $(PASSING_FORTRAN_TEST_OBJECTS)
-	@echo "======== make check rule for FortranInliner terminated normally ========"
+	@echo "======== make check rule for fortranInliner terminated normally ========"
 
 else
 check-local:
-	@echo "\nROSE Fortran development tests using the LANL POP code NOT run.  To run these reconfigure with:"
+	@echo "\nROSE fortran development tests using the LANL POP code NOT run.  To run these reconfigure with:"
 	@echo "*********************************************************************************************"
 	@echo "******************* make check not run here: configure --with-fortran ***********************"
 	@echo "*********************************************************************************************"

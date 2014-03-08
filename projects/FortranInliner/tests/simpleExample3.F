@@ -4,6 +4,6 @@
       end program
       subroutine test()
        dimension d(10)
-       dimension e(10,10)
-       dimension f(10,10,10)
+c       dimension e(10,10)
+c       dimension f(10,10,10)
       end subroutine

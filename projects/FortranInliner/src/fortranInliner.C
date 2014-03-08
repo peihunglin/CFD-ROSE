@@ -82,26 +82,38 @@ namespace fortranInliner
     // using map to store all variable names to avoid duplication
     std::map<SgName,SgVariableDeclaration*> symbolMap;
 
-    // Handling symbolTable in funcDefinition
+    // Handling symbolTable under funcDefinition
     std::set<SgNode*> funArgSymbolList = funcDefSymTable->get_symbols();
     for(std::set<SgNode*>::iterator it = funArgSymbolList.begin(); it !=funArgSymbolList.end(); ++it)
     {
       SgVariableSymbol* sym = isSgVariableSymbol(*it);
       ROSE_ASSERT(sym);
-      SgType* varType = sym->get_type();
-      SgName varName = sym->get_name();
       SgInitializedName* argInitName = sym->get_declaration();
+      // get the mapped SgExpression from caller's argument list
       SgExpression* callerExp = argsMap.find(argInitName)->second; 
-//      ROSE_ASSERT(callerExp->get_type() == varType);
 
-      string uniqName = generateUniqueVariableName(scope,varName.getString());
-      varName = SgName(uniqName);
-      SgVariableDeclaration* varDecl = buildVariableDeclaration(varName,varType,NULL,scope);
-      symbolMap.insert(std::make_pair(sym->get_name(), varDecl));
-      // A equivalence stmt has to be inserted
-      SgEquivalenceStatement* equivStmt = buildEquivalenceStatement(buildVarRefExp(convertRefToInitializedName(callerExp)),buildVarRefExp(varDecl));
-      equivStmt->set_parent(scope);
-//      insertStatementAfterLastDeclaration(equivStmt,scope);
+      // I think we only need to handle arrRefExp for now. 
+      if(isSgPntrArrRefExp(callerExp) != NULL)
+      {
+        SgVarRefExp* lhsRef = isSgVarRefExp(isSgBinaryOp(callerExp)->get_lhs_operand());
+        SgInitializedName* callerVarInitName = isSgVarRefExp(lhsRef)->get_symbol()->get_declaration();
+        SgType* varType = sym->get_type();
+        SgName varName = sym->get_name();
+        // Name has conflict at caller side
+        if(varName == callerVarInitName->get_name())
+        {
+          string uniqName = generateUniqueVariableName(scope,varName.getString());
+          varName = SgName(uniqName);
+        }
+        SgVariableDeclaration* varDecl = buildVariableDeclaration(varName,varType,NULL,scope);
+        symbolMap.insert(std::make_pair(sym->get_name(), varDecl));
+        // A equivalence stmt has to be inserted
+        SgEquivalenceStatement* equivStmt = buildEquivalenceStatement(buildVarRefExp(callerVarInitName),buildVarRefExp(varDecl));
+        equivStmt->set_parent(scope);
+//        setSourcePositionForTransformation(equivStmt);
+//        insertStatementAfterLastDeclaration(equivStmt,scope);
+      } 
+
     }
 
     // Handling symbolTable in basicblock
@@ -116,12 +128,13 @@ namespace fortranInliner
       // variable name is used in caller side
       if(callerSymTable->exists(varName) == true)
       {
-        cout << varName << " exist!" << endl;
+//        cout << varName << " exist!" << endl;
         string uniqName = generateUniqueVariableName(scope,varName.getString());
         varName = SgName(uniqName);
       }
 
       SgVariableDeclaration* varDecl = buildVariableDeclaration(varName,varType,NULL,scope);
+      //varDecl->set_parent(scope);
       symbolMap.insert(std::make_pair(sym->get_name(), varDecl));
     }
 
@@ -130,68 +143,69 @@ namespace fortranInliner
     {
       SgStatement* stmt = isSgStatement(*i);
       ROSE_ASSERT(stmt);
-      SgStatement* newStmt = deepCopy(stmt);
-      Rose_STL_Container<SgNode*> varList = NodeQuery::querySubTree(newStmt,V_SgVarRefExp);
-      for(Rose_STL_Container<SgNode*>::iterator j = varList.begin(); j != varList.end(); ++j)
-      {
-        SgVarRefExp* varRef = isSgVarRefExp(*j);
-        ROSE_ASSERT(varRef);
-        SgName tmpName = varRef->get_symbol()->get_name();
-        
-        // replacing all varRef for arguments
-        SgInitializedName* varInitializedName = varRef->get_symbol()->get_declaration();
-        SgType* varType = varInitializedName->get_type();
-        Rose_STL_Container<SgInitializedName*>::iterator it = find(calleeArgList.begin(),calleeArgList.end(),varInitializedName);        
-        if(it != calleeArgList.end())
-        {
-          cout << tmpName << " used Arg" << endl;
-          // Simply replacing the varRef with the SgExpression at caller's argument list
-          if(isSgArrayType(varType) == NULL)
-            replaceExpression(varRef, argsMap.find(varInitializedName)->second);
-          continue;
-        }
-
-        SgVariableDeclaration* newDecl = symbolMap.find(tmpName)->second;
-        newDecl->set_parent(scope);
-        SgInitializedNamePtrList varList = newDecl->get_variables();
-        ROSE_ASSERT(varList.size() == 1);
-        SgInitializedName* initname = varList.at(0);
-        SgVariableSymbol* symbol = isSgVariableSymbol(initname->get_symbol_from_symbol_table());
-        varRef->set_symbol(symbol);
-      }
       // serach for all VarRefExp in SgAttributeSpecificationStatement
       // Apprently deepCopy doesn't really copy SgAttributeSpecificationStatement
       // We need to build this step by step 
-      SgAttributeSpecificationStatement* attributeStmt = isSgAttributeSpecificationStatement(newStmt);
+      SgAttributeSpecificationStatement* attributeStmt = isSgAttributeSpecificationStatement(stmt);
       if((attributeStmt !=NULL) && (attributeStmt->get_attribute_kind() == SgAttributeSpecificationStatement::e_dimensionStatement))
       {
-        SgExpressionPtrList parameterList =  isSgAttributeSpecificationStatement(stmt)->get_parameter_list()->get_expressions();
+        SgExpressionPtrList parameterList =  attributeStmt->get_parameter_list()->get_expressions();
         SgExprListExp* newparameterList = buildExprListExp();
-        attributeStmt = buildAttributeSpecificationStatement(SgAttributeSpecificationStatement::e_dimensionStatement); 
+        SgAttributeSpecificationStatement* newattributeStmt = buildAttributeSpecificationStatement(SgAttributeSpecificationStatement::e_dimensionStatement); 
 
         for(SgExpressionPtrList::iterator k=parameterList.begin(); k != parameterList.end(); ++k)
         {
           SgPntrArrRefExp* pntrArrRefExp = deepCopy(isSgPntrArrRefExp(*k));
-          if(pntrArrRefExp != NULL)
-          {
-            SgVarRefExp* varRef = isSgVarRefExp(pntrArrRefExp->get_lhs_operand());
-            ROSE_ASSERT(varRef);
-            SgName tmpName = varRef->get_symbol()->get_name();
-            SgVariableDeclaration* newDecl = symbolMap.find(tmpName)->second;
-            newDecl->set_parent(scope);
-            SgInitializedNamePtrList varList = newDecl->get_variables();
-            ROSE_ASSERT(varList.size() == 1);
-            SgInitializedName* initname = varList.at(0);
-//            cout << "found " << tmpName << " new name: " << initname->get_name() << " " << newDecl->get_parent()<< endl;
-            SgVariableSymbol* symbol = isSgVariableSymbol(initname->get_symbol_from_symbol_table());
-            varRef->set_symbol(symbol);
-            newparameterList->append_expression(pntrArrRefExp);
-          }
+          ROSE_ASSERT(pntrArrRefExp);
+          SgVarRefExp* varRef = isSgVarRefExp(pntrArrRefExp->get_lhs_operand());
+          ROSE_ASSERT(varRef);
+          SgName tmpName = varRef->get_symbol()->get_name();
+          SgVariableDeclaration* newDecl = symbolMap.find(tmpName)->second;
+          newDecl->set_parent(scope);
+          SgInitializedNamePtrList varList = newDecl->get_variables();
+          ROSE_ASSERT(varList.size() == 1);
+          SgInitializedName* initname = varList.at(0);
+          //cout << "found " << tmpName << " new name: " << initname->get_name() << " " << newDecl->get_parent()<< endl;
+          SgVariableSymbol* symbol = isSgVariableSymbol(initname->get_symbol_from_symbol_table());
+          varRef->set_symbol(symbol);
+          newparameterList->append_expression(pntrArrRefExp);
         }
-        attributeStmt->set_parameter_list(newparameterList);
-        newStmt = isSgStatement(attributeStmt);
+        newattributeStmt->set_parameter_list(newparameterList);
+        insertStatement(funcCallStmt, newattributeStmt, true, false);
       }
-      insertStatement(funcCallStmt, newStmt, true, false);
+      else
+      {
+        SgStatement* newStmt = deepCopy(stmt);
+        Rose_STL_Container<SgNode*> varList = NodeQuery::querySubTree(newStmt,V_SgVarRefExp);
+        for(Rose_STL_Container<SgNode*>::iterator j = varList.begin(); j != varList.end(); ++j)
+        {
+          SgVarRefExp* varRef = isSgVarRefExp(*j);
+          ROSE_ASSERT(varRef);
+          SgName tmpName = varRef->get_symbol()->get_name();
+          
+          // replacing all varRef for arguments
+          SgInitializedName* varInitializedName = varRef->get_symbol()->get_declaration();
+          SgType* varType = varInitializedName->get_type();
+          Rose_STL_Container<SgInitializedName*>::iterator it = find(calleeArgList.begin(),calleeArgList.end(),varInitializedName);        
+          if(it != calleeArgList.end())
+          {
+            cout << tmpName << " used Arg" << endl;
+            // Simply replacing the varRef with the SgExpression at caller's argument list
+            if(isSgArrayType(varType) == NULL)
+              replaceExpression(varRef, argsMap.find(varInitializedName)->second);
+            continue;
+          }
+  
+          SgVariableDeclaration* newDecl = symbolMap.find(tmpName)->second;
+          newDecl->set_parent(scope);
+          SgInitializedNamePtrList varList = newDecl->get_variables();
+          ROSE_ASSERT(varList.size() == 1);
+          SgInitializedName* initname = varList.at(0);
+          SgVariableSymbol* symbol = isSgVariableSymbol(initname->get_symbol_from_symbol_table());
+          varRef->set_symbol(symbol);
+        }
+        insertStatement(funcCallStmt, newStmt, true, false);
+      }
     }
     fixVariableReferences(scope);
   }
