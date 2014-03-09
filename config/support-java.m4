@@ -115,6 +115,9 @@ if test "x$USE_JAVA" = x1; then
   if test -x /usr/bin/javaconfig; then # We are on a Mac
     JAVA_JVM_LINK="-framework JavaVM"
     JAVA_JVM_INCLUDE="-I`/usr/bin/javaconfig Headers`"
+  elif test -e ${JAVA_PATH}/include/darwin; then # javaconfig does not exist on Mac 10.8
+    JAVA_JVM_LINK="-framework JavaVM"
+    JAVA_JVM_INCLUDE="-I${JAVA_PATH}/include -I${JAVA_PATH}/include/darwin"
   else
     JAVA_JVM_FULL_PATH="`env _JAVA_LAUNCHER_DEBUG=x ${JAVA} 2>/dev/null | grep '^JVM path is' | cut -c 13-`" ; # Sun JVM
     JAVA_JVM_PATH=`dirname "${JAVA_JVM_FULL_PATH}"`

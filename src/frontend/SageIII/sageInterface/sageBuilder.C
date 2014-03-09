@@ -12522,30 +12522,18 @@ AbstractHandle::abstract_handle * SageBuilder::buildAbstractHandle(SgNode* n)
 #endif
 
 SgEquivalenceStatement*
-SageBuilder::buildEquivalenceStatement(SgExpression* elt1,SgExpression* elt2)
+SageBuilder::buildEquivalenceStatement(SgExpression* exp1,SgExpression* exp2)
 {
-  ROSE_ASSERT(elt1 != NULL); 
-  ROSE_ASSERT(elt2 != NULL); 
+  ROSE_ASSERT(exp1 != NULL); 
+  ROSE_ASSERT(exp2 != NULL); 
   
+  SgExprListExp* tuple = buildExprListExp(exp1,exp2);
+  SgExprListExp* setList = buildExprListExp(tuple);
   SgEquivalenceStatement* equivalenceStatement = new SgEquivalenceStatement();
-
-  SgExprListExp* setList = new SgExprListExp();
-
   ROSE_ASSERT(equivalenceStatement->get_equivalence_set_list() == NULL);
   equivalenceStatement->set_equivalence_set_list(setList);
   ROSE_ASSERT(equivalenceStatement->get_equivalence_set_list() != NULL);
-
-  setList->set_parent(equivalenceStatement);
-  setOneSourcePositionForTransformation(setList); 
-
-  SgExprListExp* tuple = new SgExprListExp();
-  tuple->append_expression(elt1);
-  elt1->set_parent(tuple);
-  tuple->append_expression(elt2);
-  elt2->set_parent(tuple);
-  
-  setList->append_expression(tuple);
-  tuple->set_parent(setList);
+  equivalenceStatement->set_firstNondefiningDeclaration(equivalenceStatement);
   setOneSourcePositionForTransformation(equivalenceStatement); 
   return equivalenceStatement;
 }

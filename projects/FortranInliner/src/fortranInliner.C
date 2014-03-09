@@ -116,18 +116,13 @@ namespace fortranInliner
         varDecl->set_parent(scope);
         symbolMap.insert(std::make_pair(sym->get_name(), varDecl));
         // A equivalence stmt has to be inserted
-        SgVarRefExp* exp1 = buildVarRefExp(callerVarInitName);
         SgVarRefExp* exp2 = buildVarRefExp(varDecl);
-cout << exp1 << " " << exp2 << endl;
-//        SgEquivalenceStatement* equivStmt = buildEquivalenceStatement(exp1,exp2);
-//        exp1->set_parent(equivStmt);
-//        exp2->set_parent(equivStmt);
-//        equivStmt->set_firstNondefiningDeclaration(equivStmt);
-//        equivStmt->set_parent(scope);
-//        setSourcePositionForTransformation(equivStmt);
-//        insertStatementAfterLastDeclaration(equivStmt,scope);
+        SgEquivalenceStatement* equivalenceStatement = buildEquivalenceStatement(callerExp,exp2);
+        equivalenceStatement->set_firstNondefiningDeclaration(equivalenceStatement);
+        equivalenceStatement->set_parent(scope);
+        setSourcePositionForTransformation(equivalenceStatement);
+        insertStatementAfterLastDeclaration(equivalenceStatement,scope);
       } 
-
     }
 
     // Handling symbolTable in basicblock
@@ -175,7 +170,6 @@ cout << exp1 << " " << exp2 << endl;
           ROSE_ASSERT(varRef);
           SgName tmpName = varRef->get_symbol()->get_name();
           SgVariableDeclaration* newDecl = symbolMap.find(tmpName)->second;
-//          newDecl->set_parent(scope);
           SgInitializedNamePtrList varList = newDecl->get_variables();
           ROSE_ASSERT(varList.size() == 1);
           SgInitializedName* initname = varList.at(0);
@@ -185,7 +179,8 @@ cout << exp1 << " " << exp2 << endl;
           newparameterList->append_expression(pntrArrRefExp);
         }
         newattributeStmt->set_parameter_list(newparameterList);
-        insertStatement(funcCallStmt, newattributeStmt, true, false);
+        // Inline to the very beginning
+        insertStatement(*(scope->getStatementList().begin()), newattributeStmt, true, false);
       }
       else
       {
@@ -206,12 +201,13 @@ cout << exp1 << " " << exp2 << endl;
             cout << tmpName << " used Arg" << endl;
             // Simply replacing the varRef with the SgExpression at caller's argument list
             if(isSgArrayType(varType) == NULL)
+            {
               replaceExpression(varRef, argsMap.find(varInitializedName)->second);
-            continue;
+              continue;
+            }
           }
   
           SgVariableDeclaration* newDecl = symbolMap.find(tmpName)->second;
-          newDecl->set_parent(scope);
           SgInitializedNamePtrList varList = newDecl->get_variables();
           ROSE_ASSERT(varList.size() == 1);
           SgInitializedName* initname = varList.at(0);
