@@ -89,15 +89,22 @@ namespace fortranInliner
       SgVariableSymbol* sym = isSgVariableSymbol(*it);
       ROSE_ASSERT(sym);
       SgInitializedName* argInitName = sym->get_declaration();
+      SgType* varType = sym->get_type();
       // get the mapped SgExpression from caller's argument list
-      SgExpression* callerExp = argsMap.find(argInitName)->second; 
 
-      // I think we only need to handle arrRefExp for now. 
-      if(isSgPntrArrRefExp(callerExp) != NULL)
+      // I think we only need to handle ArrayType for now.
+      // Other scalarType can be handled through replaceExpression
+      if(isSgArrayType(varType) != NULL) 
       {
-        SgVarRefExp* lhsRef = isSgVarRefExp(isSgBinaryOp(callerExp)->get_lhs_operand());
-        SgInitializedName* callerVarInitName = isSgVarRefExp(lhsRef)->get_symbol()->get_declaration();
-        SgType* varType = sym->get_type();
+        SgExpression* callerExp = argsMap.find(argInitName)->second;
+        SgVarRefExp* callerVarRef = NULL;
+        if(isSgVarRefExp(callerExp))
+          callerVarRef = isSgVarRefExp(callerExp);
+        else if(isSgPntrArrRefExp(callerExp) != NULL) 
+          callerVarRef = isSgVarRefExp(isSgVarRefExp(isSgBinaryOp(callerExp)->get_lhs_operand()));
+        else
+          continue;
+        SgInitializedName* callerVarInitName = callerVarRef->get_symbol()->get_declaration();
         SgName varName = sym->get_name();
         // Name has conflict at caller side
         if(varName == callerVarInitName->get_name())
@@ -109,7 +116,13 @@ namespace fortranInliner
         varDecl->set_parent(scope);
         symbolMap.insert(std::make_pair(sym->get_name(), varDecl));
         // A equivalence stmt has to be inserted
-//        SgEquivalenceStatement* equivStmt = buildEquivalenceStatement(buildVarRefExp(callerVarInitName),buildVarRefExp(varDecl));
+        SgVarRefExp* exp1 = buildVarRefExp(callerVarInitName);
+        SgVarRefExp* exp2 = buildVarRefExp(varDecl);
+cout << exp1 << " " << exp2 << endl;
+//        SgEquivalenceStatement* equivStmt = buildEquivalenceStatement(exp1,exp2);
+//        exp1->set_parent(equivStmt);
+//        exp2->set_parent(equivStmt);
+//        equivStmt->set_firstNondefiningDeclaration(equivStmt);
 //        equivStmt->set_parent(scope);
 //        setSourcePositionForTransformation(equivStmt);
 //        insertStatementAfterLastDeclaration(equivStmt,scope);
@@ -236,10 +249,10 @@ namespace fortranInliner
           {
             return NULL;
           }
-          printf ("          Qualified Comment in file %s (relativePosition=%s) :\n%s\n",
-               (*i)->get_file_info()->get_filenameString().c_str(),
-               ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
-               commentText.c_str());
+//          printf ("          Qualified Comment in file %s (relativePosition=%s) :\n%s\n",
+//               (*i)->get_file_info()->get_filenameString().c_str(),
+//               ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
+//               commentText.c_str());
           return stmt;
         }
       }
