@@ -11,7 +11,9 @@ TESTCODES_REQUIRED_TO_PASS = \
 				   passArg1.F \
 				   passArg2.F \
 				   passArg3.F \
-				   passArg4.F
+				   passArg4.F \
+				   redimension1.F \
+				   redimension2.F
 
 
 ALL_TESTCODES = \
@@ -44,7 +46,7 @@ check-local:
 endif
 
 clean-local:	
-	rm -f $(PASSING_FORTRAN_TEST_OBJECTS) *.c *.f *.dot
+	rm -f $(PASSING_FORTRAN_TEST_OBJECTS) *.c *.f *.dot rose_*
 
 EXTRA_DIST = $(ALL_TESTCODES) 
 
